@@ -2,42 +2,79 @@ package io.github.flashy.flashybackend.controller;
 
 import io.github.flashy.flashybackend.model.User;
 import io.github.flashy.flashybackend.repositories.UserRepository;
-
+import org.json.JSONObject;
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@RunWith(SpringRunner.class)
+@WebMvcTest(AuthenticationController.class)
 public class AuthenticationControllerTest {
 
-    private final List<User> users = new ArrayList<>();
+    @Autowired
+    private MockMvc mockMvc;
 
-    @Test
-    public void testWhenSignupNewUser() {
-        final User newUser = new User();
+    @MockBean
+    private UserRepository userRepository;
 
-        newUser.setId((long) 9991);
-        newUser.setNickName("weird_nickname");
-        newUser.setPassword("password");
+    private List<User> usersdb;
 
-        UserRepository repository = mock(UserRepository.class);
 
-        when(repository.save(newUser)).thenAnswer(invocationOnMock -> {
-            users.add(newUser);
-            return newUser;
-        });
+    @Before
+    public void setupTest() {
+        if (usersdb == null) {
+            setupBeforeAllTests();
+        }
 
-        AuthenticationController controller = new AuthenticationController(repository);
-
-        User createdUser = controller.signup(newUser);
-
-        assertEquals((long) 9991, (long) createdUser.getId());
-        assertEquals("weird_nickname", createdUser.getNickName());
-        assertEquals("password", createdUser.getPassword());
+        usersdb.clear();
     }
 
+    private void setupBeforeAllTests() {
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
+            User user = invocation.getArgument(0);
+            usersdb.add(user);
+
+            return user;
+        });
+
+        usersdb = new ArrayList<>();
+    }
+
+    @Test
+    public void testReturn201() throws Exception {
+
+        // Given: I send valid register data, nick name and password also
+        JSONObject json = new JSONObject();
+        json.put("nick_name", "user");
+        json.put("password", "user1234");
+
+
+        // When: I send that to rest endpoint /register
+        ResultActions actions = mockMvc.perform(
+                post("/register")
+                        .contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
+                        .content(json.toString())
+        );
+
+        // Expected: I will register
+        actions.andExpect(status().isCreated())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE));
+
+        verify(userRepository).save(any(User.class));
+    }
 }
