@@ -1,10 +1,23 @@
 package io.github.flashy.flashybackend.model;
 
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.json.JsonTest;
+import org.springframework.boot.test.json.JacksonTester;
+import org.springframework.boot.test.json.JsonContent;
+import org.springframework.test.context.junit4.SpringRunner;
+
+import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
 
+@RunWith(SpringRunner.class)
+@JsonTest
 public class UserDtoTest {
+
     @Test
     public void testToDto() {
         // Given
@@ -41,4 +54,24 @@ public class UserDtoTest {
         assertEquals("user1234", domain.getPassword());
     }
 
+    @Autowired
+    private JacksonTester<UserDto> json;
+
+    @Test
+    public void testSerializeUser() throws IOException, JSONException {
+        // Given
+        UserDto dto = new UserDto() {{
+            setId(1);
+            setNickName("user");
+            setPassword("user1234");
+        }};
+
+        // When
+        JsonContent<UserDto> serialized = json.write(dto);
+
+        // Except
+        String expected = new JSONObject().put("id", 1).toString();
+        String actual = serialized.getJson();
+        assertEquals(expected, actual);
+    }
 }

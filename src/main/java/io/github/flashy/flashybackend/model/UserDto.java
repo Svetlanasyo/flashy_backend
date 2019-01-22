@@ -1,11 +1,14 @@
 package io.github.flashy.flashybackend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
 @Data
 public class UserDto {
     private long id;
+    @JsonIgnore
     private String nickName;
+    @JsonIgnore
     private String password;
 
 
