@@ -37,14 +37,6 @@ public class AuthenticationControllerTest {
 
     @Before
     public void setupTest() {
-        if (usersdb == null) {
-            setupBeforeAllTests();
-        }
-
-        usersdb.clear();
-    }
-
-    private void setupBeforeAllTests() {
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
             User user = invocation.getArgument(0);
             usersdb.add(user);
@@ -56,15 +48,12 @@ public class AuthenticationControllerTest {
     }
 
     @Test
-    public void testReturn201() throws Exception {
-
-        // Given: I send valid register data, nick name and password also
+    public void testReturn201IfUserRegistered() throws Exception {
+        // When: I send that to rest endpoint /register
         JSONObject json = new JSONObject();
         json.put("nick_name", "user");
         json.put("password", "user1234");
 
-
-        // When: I send that to rest endpoint /register
         ResultActions actions = mockMvc.perform(
                 post("/register")
                         .contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
